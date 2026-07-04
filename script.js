@@ -66,7 +66,7 @@ const game = {
         } else if (Math.random() < 0.02) {
             const r = Math.random();
             if (r < 0.15) this.entities.push({ type: 'cloud', x: 700, y: 100, vx: -6, vy: 0 });
-            else if (r < 0.4) this.entities.push({ type: 'bomb', x: 700, y: 100 + Math.random()*200, vx: -8, vy: 0 });
+            else if (r < 0.4) this.entities.push({ type: 'bomb', x: 700, y: -50 + Math.random()*200, vx: -8, vy: 5 });
             else this.entities.push({ type: 'cactus', x: 700, y: CFG.GROUND - 35, vx: -6, vy: 0 });
         }
 
@@ -97,7 +97,7 @@ const game = {
         this.ctx.fillText(`Score: ${Math.floor(this.score)} | Best: ${this.best}`, 20, 40);
         if (this.state === 'gameover') {
             this.ctx.textAlign = "center";
-            this.ctx.fillText("GAME OVER - TAP/SPACE TO RESTART", 350, 225);
+            this.ctx.fillText("ゲームオーバｧｧｧｧー　どんまい！笑", 350, 225);
         }
         requestAnimationFrame(() => this.loop());
     }
