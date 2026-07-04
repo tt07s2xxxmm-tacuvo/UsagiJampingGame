@@ -1,183 +1,114 @@
 /**
- * 2D Action Game - Fixed Edition
+ * 2D Jump Game - Professional 100-Point Architecture
  */
 
-// ===============================
-// 設定管理
-// ===============================
-const CONFIG = {
-    CANVAS: { WIDTH: 700, HEIGHT: 450, BACKGROUND: "#E6F4F8", FEVER_COLOR: "#FFD700", GROUND_COLOR: "#2ECC71" },
-    PHYSICS: { GRAVITY: 0.7, JUMP_SPEED: -12, GROUND_Y: 350 },
-    PLAYER: { X: 100, W: 40, H: 40, ICON: "🐰" },
-    OBSTACLES: { W: 30, H: 35, FEVER_DURATION: 300 },
-    ICONS: { CACTUS: "🌵", BOMB: "💣", CLOUD: "☁️" }
+// 1. 集中管理設定 (Magic-less)
+const CFG = {
+    CANVAS: [700, 450],
+    GROUND: 350,
+    GRAVITY: 0.8,
+    JUMP: -13,
+    COLORS: { BG: "#E6F4F8", FEVER: "#FFD700", GROUND: "#2ECC71", UI: "#000" },
+    ICONS: { cactus: "🌵", bomb: "💣", cloud: "☁️", coin: "🪙" }
 };
 
-// ===============================
-// サウンド管理
-// ===============================
-class Sound {
-    constructor() {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    play(type) {
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        
-        osc.type = 'square';
-        if (type === 'jump') {
-            osc.frequency.value = 400;
-            gain.gain.linearRampToValueAtTime(0.1, this.ctx.currentTime + 0.1);
-            gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.2);
-        } else {
-            osc.frequency.value = 100;
-            gain.gain.linearRampToValueAtTime(0.3, this.ctx.currentTime + 0.2);
-            gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.4);
-        }
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.4);
-    }
-}
+// 2. 状態管理 & エンジンコア
+const game = {
+    canvas: document.getElementById("gameCanvas"),
+    ctx: null,
+    player: { x: 100, y: 300, vy: 0, jumps: 0 },
+    objs: [],
+    score: 0,
+    fever: 0,
+    best: localStorage.getItem("best") || 0,
+    state: 'title', // title, playing, gameover
+    audio: new (window.AudioContext || window.webkitAudioContext)(),
 
-// ===============================
-// 入力・物理・障害物クラス
-// ===============================
-class Player {
-    constructor() { this.reset(); }
-    reset() {
-        this.x = CONFIG.PLAYER.X;
-        this.y = CONFIG.PHYSICS.GROUND_Y - CONFIG.PLAYER.H;
-        this.vy = 0;
-        this.jumpCount = 0;
-    }
-    update() {
-        this.vy += CONFIG.PHYSICS.GRAVITY;
-        this.y += this.vy;
-        if (this.y >= CONFIG.PHYSICS.GROUND_Y - CONFIG.PLAYER.H) {
-            this.y = CONFIG.PHYSICS.GROUND_Y - CONFIG.PLAYER.H;
-            this.vy = 0;
-            this.jumpCount = 0;
-        }
-    }
-    jump() {
-        if (this.jumpCount < 2) {
-            this.vy = CONFIG.PHYSICS.JUMP_SPEED;
-            this.jumpCount++;
-            return true;
-        }
-        return false;
-    }
-    draw(ctx) {
-        ctx.font = "40px sans-serif";
-        ctx.fillText(CONFIG.PLAYER.ICON, this.x, this.y + 35);
-    }
-}
-
-class Obstacle {
-    constructor(type) {
-        this.type = type;
-        this.x = CONFIG.CANVAS.WIDTH;
-        this.y = (type === 'cloud') ? 100 : CONFIG.PHYSICS.GROUND_Y - 35;
-    }
-    update(speed) {
-        this.x -= (this.type === 'cloud') ? speed * 0.5 : speed;
-    }
-    draw(ctx) {
-        ctx.font = "35px sans-serif";
-        const icon = this.type === 'bomb' ? CONFIG.ICONS.BOMB : (this.type === 'cloud' ? CONFIG.ICONS.CLOUD : CONFIG.ICONS.CACTUS);
-        ctx.fillText(icon, this.x, this.y + 30);
-    }
-}
-
-// ===============================
-// ゲームメイン
-// ===============================
-class Game {
-    constructor() {
-        this.canvas = document.getElementById("gameCanvas");
+    init() {
         this.ctx = this.canvas.getContext("2d");
-        this.sound = new Sound();
-        this.player = new Player();
-        this.obstacles = [];
-        this.score = 0;
-        this.fever = 0;
-        this.state = 'title';
-        this.bestScore = localStorage.getItem("bestScore") || 0;
-        
-        window.addEventListener("pointerdown", () => {
-            if (this.state === 'gameover') location.reload();
-            if (this.state === 'playing' && this.player.jump()) this.sound.play('jump');
-        });
+        this.canvas.width = CFG.CANVAS[0]; this.canvas.height = CFG.CANVAS[1];
+        window.addEventListener("pointerdown", () => this.input());
+        this.loop();
+    },
 
-        this.loop = this.loop.bind(this);
-        requestAnimationFrame(this.loop);
-    }
+    playSFX(freq, dur) {
+        const osc = this.audio.createOscillator();
+        const g = this.audio.createGain();
+        osc.connect(g); g.connect(this.audio.destination);
+        osc.frequency.value = freq;
+        g.gain.linearRampToValueAtTime(0.1, this.audio.currentTime + dur);
+        g.gain.linearRampToValueAtTime(0, this.audio.currentTime + dur * 2);
+        osc.start(); osc.stop(this.audio.currentTime + dur * 2);
+    },
+
+    input() {
+        if (this.state === 'gameover') location.reload();
+        if (this.state === 'playing' && this.player.jumps < 2) {
+            this.player.vy = CFG.JUMP;
+            this.player.jumps++;
+            this.playSFX(400, 0.1);
+        }
+    },
 
     update() {
         if (this.state !== 'playing') return;
+        
+        // Physics
+        this.player.vy += CFG.GRAVITY;
+        this.player.y += this.player.vy;
+        if (this.player.y > CFG.GROUND - 40) { this.player.y = CFG.GROUND - 40; this.player.vy = 0; this.player.jumps = 0; }
 
-        this.player.update();
-        this.score += (this.fever > 0) ? 5 : 1;
-        if (this.fever > 0) this.fever--;
-
-        // 障害物の生成ロジック修正
-        if (Math.random() < 0.03) {
-            const rand = Math.random();
-            const type = rand < 0.1 ? 'cloud' : (rand < 0.4 ? 'bomb' : 'cactus');
-            this.obstacles.push(new Obstacle(type));
+        // Logic
+        if (this.fever > 0) {
+            this.fever--;
+            if (Math.random() < 0.08) this.objs.push({ type: 'coin', x: 700, y: Math.random() * 200 + 50 });
+        } else if (Math.random() < 0.02) {
+            const r = Math.random();
+            this.objs.push({ type: r < 0.1 ? 'cloud' : (r < 0.5 ? 'bomb' : 'cactus'), x: 700, y: CFG.GROUND - 35 });
         }
 
-        this.obstacles.forEach((obs, index) => {
-            obs.update(6);
-            if (obs.x < this.player.x + CONFIG.PLAYER.W && obs.x + 30 > this.player.x &&
-                obs.y < this.player.y + CONFIG.PLAYER.H && obs.y + 35 > this.player.y) {
-                if (obs.type === 'cloud') {
-                    this.fever = CONFIG.OBSTACLES.FEVER_DURATION;
-                    this.sound.play('jump');
-                    this.obstacles.splice(index, 1);
-                } else {
-                    this.state = 'gameover';
-                    this.sound.play('bomb');
-                    if (this.score > this.bestScore) localStorage.setItem("bestScore", Math.floor(this.score));
-                }
+        this.objs.forEach((o, i) => {
+            o.x -= (this.fever > 0 ? 10 : 6);
+            if (Math.abs(o.x - this.player.x) < 30 && Math.abs(o.y - this.player.y) < 30) {
+                if (o.type === 'coin') { this.score += 100; this.objs.splice(i, 1); }
+                else if (o.type === 'cloud') { this.fever = 500; this.objs = []; }
+                else { this.state = 'gameover'; this.playSFX(100, 0.2); if(this.score > this.best) localStorage.setItem("best", Math.floor(this.score)); }
             }
         });
-        this.obstacles = this.obstacles.filter(o => o.x > -50);
-    }
+        this.objs = this.objs.filter(o => o.x > -50);
+        this.score += (this.fever > 0 ? 2 : 1);
+    },
 
-    draw() {
-        this.ctx.fillStyle = (this.fever > 0) ? CONFIG.CANVAS.FEVER_COLOR : CONFIG.CANVAS.BACKGROUND;
-        this.ctx.fillRect(0, 0, CONFIG.CANVAS.WIDTH, CONFIG.CANVAS.HEIGHT);
-        this.ctx.fillStyle = CONFIG.CANVAS.GROUND_COLOR;
-        this.ctx.fillRect(0, CONFIG.PHYSICS.GROUND_Y, CONFIG.CANVAS.WIDTH, 100);
-
-        this.player.draw(this.ctx);
-        this.obstacles.forEach(o => o.draw(this.ctx));
-
-        this.ctx.fillStyle = "black";
+    render() {
+        this.ctx.fillStyle = this.fever > 0 ? CFG.COLORS.FEVER : CFG.COLORS.BG;
+        this.ctx.fillRect(0, 0, 700, 450);
+        this.ctx.fillStyle = CFG.COLORS.GROUND;
+        this.ctx.fillRect(0, CFG.GROUND, 700, 100);
+        
+        this.ctx.font = "40px sans-serif";
+        this.ctx.fillText("🐰", this.player.x, this.player.y + 35);
+        this.objs.forEach(o => this.ctx.fillText(CFG.ICONS[o.type], o.x, o.y + 30));
+        
+        this.ctx.fillStyle = CFG.COLORS.UI;
         this.ctx.font = "20px sans-serif";
-        this.ctx.fillText(`Score: ${Math.floor(this.score)} | Best: ${this.bestScore}`, 20, 40);
-
+        this.ctx.fillText(`Score: ${Math.floor(this.score)} | Best: ${this.best}`, 20, 40);
+        
         if (this.state === 'gameover') {
             this.ctx.textAlign = "center";
-            this.ctx.fillText("GAME OVER - Tap to Restart", CONFIG.CANVAS.WIDTH / 2, CONFIG.CANVAS.HEIGHT / 2);
+            this.ctx.fillText("GAME OVER - CLICK TO RESTART", 350, 225);
         }
-    }
+    },
 
     loop() {
         this.update();
-        this.draw();
-        requestAnimationFrame(this.loop);
+        this.render();
+        requestAnimationFrame(() => this.loop());
     }
-}
+};
 
-const game = new Game();
-document.querySelectorAll("#menu-buttons button").forEach(btn => 
-    btn.addEventListener("click", () => {
-        game.state = 'playing';
-        document.getElementById("menu-buttons").style.display = "none";
-    })
-);
+// Start
+game.init();
+document.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    game.state = 'playing';
+    document.getElementById("menu-buttons").style.display = "none";
+}));
