@@ -1,5 +1,5 @@
 /**
- * 2D Jump Game - Performance Optimized & Feature Complete
+ * 2D Action Game - Professional Edition (Refined)
  */
 
 const CFG = {
@@ -12,8 +12,7 @@ const game = {
     canvas: document.getElementById("gameCanvas"),
     ctx: null,
     player: { x: 100, y: 300, vy: 0, jumps: 0 },
-    entities: [],
-    score: 0, fever: 0, best: localStorage.getItem("best") || 0,
+    entities: [], score: 0, fever: 0, best: localStorage.getItem("best") || 0,
     state: 'title',
     audio: new (window.AudioContext || window.webkitAudioContext)(),
 
@@ -24,46 +23,53 @@ const game = {
         this.loop();
     },
 
+    playSFX(freq, type = 'sine') {
+        const o = this.audio.createOscillator(), g = this.audio.createGain();
+        o.type = type; o.frequency.value = freq;
+        g.gain.linearRampToValueAtTime(0.2, this.audio.currentTime + 0.1);
+        g.gain.linearRampToValueAtTime(0, this.audio.currentTime + 0.3);
+        o.connect(g); g.connect(this.audio.destination);
+        o.start(); o.stop(this.audio.currentTime + 0.3);
+    },
+
     input() {
         if (this.state === 'gameover') location.reload();
         if (this.state === 'playing' && this.player.jumps < 2) {
             this.player.vy = CFG.JUMP; this.player.jumps++;
+            this.playSFX(400);
         }
     },
 
     update() {
         if (this.state !== 'playing') return;
 
-        // Player Physics
         this.player.vy += CFG.GRAVITY;
         this.player.y += this.player.vy;
         if (this.player.y > CFG.GROUND - 40) { this.player.y = CFG.GROUND - 40; this.player.vy = 0; this.player.jumps = 0; }
 
-        // Spawn Logic
+        // フィーバー中はコインを大量生成
         if (this.fever > 0) {
             this.fever--;
-            if (Math.random() < 0.05) this.entities.push({ type: 'coin', x: 700, y: Math.random() * 200 + 50, vx: -8, vy: 0 });
-        } else {
-            if (Math.random() < 0.015) { // 雲
-                this.entities.push({ type: 'cloud', x: 700, y: 100, vx: -6, vy: 0 });
-            } else if (Math.random() < 0.02) { // 爆弾：上から落下
-                this.entities.push({ type: 'bomb', x: Math.random() * 500 + 100, y: -50, vx: 0, vy: 5 });
-            } else if (Math.random() < 0.01) { // サボテン
-                this.entities.push({ type: 'cactus', x: 700, y: CFG.GROUND - 35, vx: -6, vy: 0 });
+            if (this.fever % 15 === 0) { // 定期的なコイン列生成
+                for(let i=0; i<3; i++) this.entities.push({ type: 'coin', x: 700 + i*40, y: 150 + Math.random()*150, vx: -12, vy: 0 });
             }
+        } else {
+            // 爆弾は斜め（横移動あり）に落下するように変更
+            if (Math.random() < 0.02) this.entities.push({ type: 'bomb', x: Math.random() * 600, y: -50, vx: -3, vy: 6 });
+            else if (Math.random() < 0.015) this.entities.push({ type: 'cloud', x: 700, y: 100, vx: -6, vy: 0 });
+            else if (Math.random() < 0.01) this.entities.push({ type: 'cactus', x: 700, y: CFG.GROUND - 35, vx: -6, vy: 0 });
         }
 
-        // Entity Update
         this.entities.forEach((e, i) => {
             e.x += e.vx; e.y += e.vy;
             if (Math.abs(e.x - this.player.x) < 30 && Math.abs(e.y - this.player.y) < 30) {
-                if (e.type === 'coin') { this.score += 100; this.entities.splice(i, 1); }
-                else if (e.type === 'cloud') { this.fever = 500; this.entities = []; }
-                else { this.state = 'gameover'; if(this.score > this.best) localStorage.setItem("best", Math.floor(this.score)); }
+                if (e.type === 'coin') { this.score += 200; this.entities.splice(i, 1); this.playSFX(600, 'square'); }
+                else if (e.type === 'cloud') { this.fever = 600; this.entities = []; this.playSFX(800, 'triangle'); }
+                else { this.state = 'gameover'; this.playSFX(100, 'sawtooth'); if(this.score > this.best) localStorage.setItem("best", Math.floor(this.score)); }
             }
         });
         this.entities = this.entities.filter(e => e.x > -50 && e.y < 500);
-        this.score += (this.fever > 0 ? 2 : 1);
+        this.score += (this.fever > 0 ? 0 : 1);
     },
 
     loop() {
