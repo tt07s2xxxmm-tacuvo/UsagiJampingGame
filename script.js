@@ -8,14 +8,29 @@ const CONFIG = {
     PHYSICS: { GRAVITY: 0.7, JUMP_SPEED: -12 }
 };
 
+// ===============================
+// 障害物専用クラス
+// ===============================
+class Obstacle {
+    constructor(x, type) {
+        this.x = x;
+        this.y = CONFIG.GROUND_Y - 30; // 地面の上に配置
+        this.type = type; // "cactus" など
+        this.width = 30;
+    }
+    update(speed) {
+        this.x -= speed;
+    }
+    draw(ctx) {
+        ctx.font = "30px sans-serif";
+        ctx.fillText("🌵", this.x, this.y);
+    }
+}
+
 class Player {
     constructor() {
-        this.x = 100;
-        this.y = 300;
-        this.w = 45;
-        this.h = 45;
-        this.vy = 0;
-        this.jumpCount = 0;
+        this.x = 100; this.y = 300; this.w = 45; this.h = 45;
+        this.vy = 0; this.jumpCount = 0;
     }
     update() {
         this.vy += CONFIG.PHYSICS.GRAVITY;
@@ -43,12 +58,14 @@ class Game {
         this.canvas = document.getElementById("gameCanvas");
         this.ctx = this.canvas.getContext("2d");
         this.player = new Player();
+        this.obstacles = [];
         this.isTitle = true;
+        this.spawnTimer = 0;
 
         window.addEventListener("resize", () => this.resize());
         this.resize();
         this.initInput();
-        this.draw(); // タイトル描画
+        this.draw();
     }
 
     resize() {
@@ -68,20 +85,16 @@ class Game {
             if (!this.isTitle) this.player.jump();
         });
 
-        // ボタンイベントをここで一括設定
         document.querySelectorAll("#menu-buttons button").forEach(btn => {
             btn.addEventListener("click", (e) => {
-                const s = parseInt(e.target.dataset.speed);
-                const mi = parseInt(e.target.dataset.min);
-                const ma = parseInt(e.target.dataset.max);
-                const t = parseInt(e.target.dataset.target);
-                this.startGame(s, mi, ma, t);
+                this.startGame(parseInt(e.target.dataset.speed));
             });
         });
     }
 
-    startGame(speed, min, max, target) {
+    startGame(speed) {
         this.isTitle = false;
+        this.gameSpeed = speed;
         document.getElementById("menu-buttons").style.display = "none";
         this.loop();
     }
@@ -95,6 +108,17 @@ class Game {
 
     update() {
         this.player.update();
+        
+        // 障害物の生成
+        this.spawnTimer++;
+        if (this.spawnTimer > 100) {
+            this.obstacles.push(new Obstacle(CONFIG.BASE_WIDTH, "cactus"));
+            this.spawnTimer = 0;
+        }
+
+        // 障害物の移動と削除
+        this.obstacles.forEach(obs => obs.update(this.gameSpeed));
+        this.obstacles = this.obstacles.filter(obs => obs.x > -50);
     }
 
     draw() {
@@ -105,14 +129,8 @@ class Game {
         this.ctx.fillStyle = "#2ECC71";
         this.ctx.fillRect(0, CONFIG.GROUND_Y, CONFIG.BASE_WIDTH, CONFIG.BASE_HEIGHT - CONFIG.GROUND_Y);
         
-        if (this.isTitle) {
-            this.ctx.fillStyle = "#1A5276";
-            this.ctx.font = "bold 30px sans-serif";
-            this.ctx.textAlign = "center";
-            this.ctx.fillText("ボタンを押して開始！", CONFIG.BASE_WIDTH / 2, CONFIG.BASE_HEIGHT / 2);
-        } else {
-            this.player.draw(this.ctx);
-        }
+        this.player.draw(this.ctx);
+        this.obstacles.forEach(obs => obs.draw(this.ctx));
     }
 }
 
