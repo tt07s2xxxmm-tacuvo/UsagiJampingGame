@@ -1,36 +1,49 @@
 /**
- * 2D Action Game - Refactored Edition
+ * 2D Action Game - Fixed Edition
  */
 
 // ===============================
-// 設定管理 (マジックナンバー排除)
+// 設定管理
 // ===============================
 const CONFIG = {
     CANVAS: { WIDTH: 700, HEIGHT: 450, BACKGROUND: "#E6F4F8", FEVER_COLOR: "#FFD700", GROUND_COLOR: "#2ECC71" },
     PHYSICS: { GRAVITY: 0.7, JUMP_SPEED: -12, GROUND_Y: 350 },
     PLAYER: { X: 100, W: 40, H: 40, ICON: "🐰" },
-    OBSTACLES: { W: 30, H: 35, SPAWN_INTERVAL: 60, FEVER_DURATION: 300 },
+    OBSTACLES: { W: 30, H: 35, FEVER_DURATION: 300 },
     ICONS: { CACTUS: "🌵", BOMB: "💣", CLOUD: "☁️" }
 };
 
 // ===============================
-// 入力管理 (InputManager)
+// サウンド管理
 // ===============================
-class InputManager {
-    constructor(callback) {
-        this.callback = callback;
-        this.init();
+class Sound {
+    constructor() {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     }
-    init() {
-        window.addEventListener("pointerdown", (e) => {
-            if (e.target.tagName === "BUTTON") return;
-            this.callback();
-        });
+    play(type) {
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        
+        osc.type = 'square';
+        if (type === 'jump') {
+            osc.frequency.value = 400;
+            gain.gain.linearRampToValueAtTime(0.1, this.ctx.currentTime + 0.1);
+            gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.2);
+        } else {
+            osc.frequency.value = 100;
+            gain.gain.linearRampToValueAtTime(0.3, this.ctx.currentTime + 0.2);
+            gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.4);
+        }
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.4);
     }
 }
 
 // ===============================
-// 物理・描画用クラス群
+// 入力・物理・障害物クラス
 // ===============================
 class Player {
     constructor() { this.reset(); }
@@ -69,7 +82,7 @@ class Obstacle {
         this.x = CONFIG.CANVAS.WIDTH;
         this.y = (type === 'cloud') ? 100 : CONFIG.PHYSICS.GROUND_Y - 35;
     }
-    update(speed, isFever) {
+    update(speed) {
         this.x -= (this.type === 'cloud') ? speed * 0.5 : speed;
     }
     draw(ctx) {
@@ -80,27 +93,27 @@ class Obstacle {
 }
 
 // ===============================
-// ゲームメイン (GameEngine)
+// ゲームメイン
 // ===============================
 class Game {
     constructor() {
         this.canvas = document.getElementById("gameCanvas");
         this.ctx = this.canvas.getContext("2d");
+        this.sound = new Sound();
         this.player = new Player();
         this.obstacles = [];
         this.score = 0;
         this.fever = 0;
-        this.state = 'title'; // title, playing, gameover
+        this.state = 'title';
         this.bestScore = localStorage.getItem("bestScore") || 0;
         
-        this.input = new InputManager(() => this.handleInput());
+        window.addEventListener("pointerdown", () => {
+            if (this.state === 'gameover') location.reload();
+            if (this.state === 'playing' && this.player.jump()) this.sound.play('jump');
+        });
+
         this.loop = this.loop.bind(this);
         requestAnimationFrame(this.loop);
-    }
-
-    handleInput() {
-        if (this.state === 'gameover') location.reload();
-        if (this.state === 'playing') this.player.jump();
     }
 
     update() {
@@ -110,21 +123,25 @@ class Game {
         this.score += (this.fever > 0) ? 5 : 1;
         if (this.fever > 0) this.fever--;
 
-        if (Math.random() < 0.02) {
-            const types = ['cactus', 'cactus', 'bomb', 'cloud'];
-            this.obstacles.push(new Obstacle(types[Math.floor(Math.random() * types.length)]));
+        // 障害物の生成ロジック修正
+        if (Math.random() < 0.03) {
+            const rand = Math.random();
+            const type = rand < 0.1 ? 'cloud' : (rand < 0.4 ? 'bomb' : 'cactus');
+            this.obstacles.push(new Obstacle(type));
         }
 
         this.obstacles.forEach((obs, index) => {
-            obs.update(5, this.fever > 0);
-            // 衝突判定 (AABB)
+            obs.update(6);
             if (obs.x < this.player.x + CONFIG.PLAYER.W && obs.x + 30 > this.player.x &&
                 obs.y < this.player.y + CONFIG.PLAYER.H && obs.y + 35 > this.player.y) {
                 if (obs.type === 'cloud') {
                     this.fever = CONFIG.OBSTACLES.FEVER_DURATION;
+                    this.sound.play('jump');
                     this.obstacles.splice(index, 1);
                 } else {
-                    this.gameOver();
+                    this.state = 'gameover';
+                    this.sound.play('bomb');
+                    if (this.score > this.bestScore) localStorage.setItem("bestScore", Math.floor(this.score));
                 }
             }
         });
@@ -134,7 +151,6 @@ class Game {
     draw() {
         this.ctx.fillStyle = (this.fever > 0) ? CONFIG.CANVAS.FEVER_COLOR : CONFIG.CANVAS.BACKGROUND;
         this.ctx.fillRect(0, 0, CONFIG.CANVAS.WIDTH, CONFIG.CANVAS.HEIGHT);
-        
         this.ctx.fillStyle = CONFIG.CANVAS.GROUND_COLOR;
         this.ctx.fillRect(0, CONFIG.PHYSICS.GROUND_Y, CONFIG.CANVAS.WIDTH, 100);
 
@@ -146,16 +162,9 @@ class Game {
         this.ctx.fillText(`Score: ${Math.floor(this.score)} | Best: ${this.bestScore}`, 20, 40);
 
         if (this.state === 'gameover') {
-            this.ctx.fillStyle = "red";
-            this.ctx.font = "bold 50px sans-serif";
             this.ctx.textAlign = "center";
-            this.ctx.fillText("GAME OVER", CONFIG.CANVAS.WIDTH / 2, CONFIG.CANVAS.HEIGHT / 2);
+            this.ctx.fillText("GAME OVER - Tap to Restart", CONFIG.CANVAS.WIDTH / 2, CONFIG.CANVAS.HEIGHT / 2);
         }
-    }
-
-    gameOver() {
-        this.state = 'gameover';
-        if (this.score > this.bestScore) localStorage.setItem("bestScore", Math.floor(this.score));
     }
 
     loop() {
@@ -163,16 +172,12 @@ class Game {
         this.draw();
         requestAnimationFrame(this.loop);
     }
-
-    start(speed) {
-        this.state = 'playing';
-        document.getElementById("menu-buttons").style.display = "none";
-    }
 }
 
-// 起動
 const game = new Game();
-// ボタンのリスナー設定
 document.querySelectorAll("#menu-buttons button").forEach(btn => 
-    btn.addEventListener("click", () => game.start())
+    btn.addEventListener("click", () => {
+        game.state = 'playing';
+        document.getElementById("menu-buttons").style.display = "none";
+    })
 );
