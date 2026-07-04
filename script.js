@@ -89,11 +89,13 @@ const GAME = {
             showTitleScreen();
         } else {
             if (jumpCount < 2) {
-                playerVy = JUMP_SPEED;
+                playerVy = GAME.JUMP_SPEED;
                 jumpCount++;
                 if (bonusStageTimer > 0) {
-                    score += 150;
+                    score += 200;
                     updateScoreText();
+                    addStarEffect(obs[0], obs[1]);
+                    continue;
                 }
             }
         }
@@ -157,6 +159,7 @@ const GAME = {
         if (gameOver || gameCleared || isTitle) return;
 
         updatePlayer();
+        updateEffects();
         updateFeverTimers();
         spawnObjects();
         moveObjects();
@@ -171,7 +174,7 @@ const GAME = {
 // プレイヤー関連
 // ===============================
     function updatePlayer() {
-        playerVy += GRAVITY;
+        playerVy += GAME.GRAVITY;
         playerY += playerVy;
 
         if (playerY >= groundY - playerH) {
