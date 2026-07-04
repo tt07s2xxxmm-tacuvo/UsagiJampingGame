@@ -7,11 +7,23 @@ const canvas = document.getElementById("gameCanvas");
     const menuButtons = document.getElementById("menu-buttons");
     const container = document.getElementById("game-container");
 
-    // 定数設定
-    const WIDTH = 700;
-    const HEIGHT = 450;
-    const GRAVITY = 0.7;
-    const JUMP_SPEED = -12;
+    let effects = [];
+
+// ===============================
+// ゲーム設定
+// ===============================
+
+const GAME = {
+    WIDTH:700,
+    HEIGHT:450,
+    GROUND_Y:350,
+    PLAYER_START_X:100,
+    PLAYER_START_Y:300,
+    PLAYER_WIDTH:45,
+    PLAYER_HEIGHT:45,
+    GRAVITY:0.7,
+    JUMP_SPEED:-12
+};
 
     // ゲーム状態変数
     let isTitle = true;
@@ -28,13 +40,14 @@ const canvas = document.getElementById("gameCanvas");
     let spawnMin = 45;
     let spawnMax = 85;
 
-    let playerX = 100;
-    let playerY = 300;
-    const playerW = 45;
-    const playerH = 45;
+    let playerX = GAME.PLAYER_START_X;
+    let playerY = GAME.PLAYER_START_Y;
+    const playerW = GAME.PLAYER_WIDTH;
+    const playerH = GAME.PLAYER_HEIGHT;
+
     let playerVy = 0;
     let jumpCount = 0;
-    const groundY = 350;
+    const groundY = GAME.GROUND_Y;
 
     let invincibleTimer = 0;
     let bonusStageTimer = 0;
@@ -43,7 +56,7 @@ const canvas = document.getElementById("gameCanvas");
     let feverSpawnTimer = 0;
 
     let goalFlagSpawned = false;
-    let goalFlag = [WIDTH, groundY - 70, 40, 70];
+    let goalFlag = [GAME.WIDTH, groundY - 70, 40, 70];
 
     // 入力処理（PCのスペースキー ＆ スマホの画面タップ両対応）
     window.addEventListener("keydown", (e) => {
@@ -130,7 +143,7 @@ const canvas = document.getElementById("gameCanvas");
         feverSpawnTimer = 0;
 
         goalFlagSpawned = false;
-        goalFlag = [WIDTH, groundY - 70, 40, 70];
+        goalFlag = [GAME.WIDTH, groundY - 70, 40, 70];
 
         gameLoop();
     }
@@ -154,7 +167,9 @@ const canvas = document.getElementById("gameCanvas");
 
         requestAnimationFrame(gameLoop);
     }
-
+// ===============================
+// プレイヤー関連
+// ===============================
     function updatePlayer() {
         playerVy += GRAVITY;
         playerY += playerVy;
@@ -167,6 +182,22 @@ const canvas = document.getElementById("gameCanvas");
 
         if (invincibleTimer > 0) invincibleTimer--;
     }
+// ===============================
+// 演出関連
+// ===============================
+    function updateEffects(){
+
+    for(let e of effects){
+
+        e.y -= 1;
+
+        e.life--;
+
+    }
+
+    effects = effects.filter(e => e.life > 0);
+
+}
 
     function updateFeverTimers() {
         if (bonusStageTimer > 0) {
@@ -182,7 +213,9 @@ const canvas = document.getElementById("gameCanvas");
             }
         }
     }
-
+// ===============================
+// オブジェクト関連
+// ===============================
     function spawnObjects() {
         if (score >= targetScore) return;
 
@@ -190,7 +223,7 @@ const canvas = document.getElementById("gameCanvas");
         if (bonusStageTimer > 0) {
             feverSpawnTimer++;
             if (feverSpawnTimer >= 4) { // 約0.06秒ごと
-                let starX = WIDTH + Math.random() * 100;
+                let starX = GAME.WIDTH + Math.random() * 100;
                 let starY = 80 + Math.random() * 210;
                 obstacles.push([starX, starY, 30, 30, "score_star"]);
                 feverSpawnTimer = 0;
@@ -209,11 +242,11 @@ const canvas = document.getElementById("gameCanvas");
             
             if (obsType === "ground") {
                 let obsH = 35 + Math.random() * 20;
-                obstacles.push([WIDTH, groundY - obsH, 30, obsH, "ground"]);
+                obstacles.push([GAME.WIDTH, groundY - obsH, 30, obsH, "ground"]);
             } else if (obsType === "bomb") {
-                obstacles.push([WIDTH, 40 + Math.random() * 100, 35, 35, "bomb"]);
+                obstacles.push([GAME.WIDTH, 40 + Math.random() * 100, 35, 35, "bomb"]);
             } else if (obsType === "cloud") {
-                obstacles.push([WIDTH, 210 + Math.random() * 30, 105, 30, "cloud"]);
+                obstacles.push([GAME.WIDTH, 210 + Math.random() * 30, 105, 30, "cloud"]);
             }
             spawnTimer = 0;
         }
@@ -284,7 +317,7 @@ const canvas = document.getElementById("gameCanvas");
         // 最初のスター敷き詰め
         for (let col = 0; col < 4; col++) {
             for (let row = 0; row < 3; row++) {
-                let starX = WIDTH - 200 + (col * 90);
+                let starX = GAME.WIDTH - 200 + (col * 90);
                 let starY = 80 + (row * 70);
                 obstacles.push([starX, starY, 30, 30, "score_star"]);
             }
@@ -313,21 +346,21 @@ const canvas = document.getElementById("gameCanvas");
     function draw() {
         // 背景クリア
         ctx.fillStyle = bgBackground;
-        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        ctx.fillRect(0, 0, GAME.WIDTH, GAME.HEIGHT);
 
         // 地面
         ctx.fillStyle = "#2ECC71";
-        ctx.fillRect(0, groundY, WIDTH, HEIGHT - groundY);
+        ctx.fillRect(0, groundY, GAME.WIDTH, GAME.HEIGHT - groundY);
 
         if (isTitle) {
             ctx.fillStyle = "#1A5276";
             ctx.font = "bold 28px 'MS Gothic', sans-serif";
             ctx.textAlign = "center";
-            ctx.fillText("🐰 うさぎのジャンピングスター 🌟", WIDTH / 2, HEIGHT / 5);
+            ctx.fillText("🐰 うさぎのジャンピングスター 🌟", GAME.WIDTH / 2, GAME.HEIGHT / 5);
             
             ctx.fillStyle = "#2C3E50";
             ctx.font = "bold 16px 'MS Gothic', sans-serif";
-            ctx.fillText("むずかしさを えらんでね！", WIDTH / 2, HEIGHT / 3);
+            ctx.fillText("むずかしさを えらんでね！", GAME.WIDTH / 2, GAME.HEIGHT / 3);
             return;
         }
 
@@ -395,24 +428,40 @@ const canvas = document.getElementById("gameCanvas");
         if (gameOver) {
             ctx.fillStyle = "#C0392B";
             ctx.font = "bold 32px sans-serif";
-            ctx.fillText("GAME OVER", WIDTH / 2, HEIGHT / 2 - 20);
+            ctx.fillText("GAME OVER", GAME.WIDTH / 2, GAME.HEIGHT / 2 - 20);
             ctx.fillStyle = "#2C3E50";
             ctx.font = "bold 16px sans-serif";
-            ctx.fillText("タップして タイトルにもどる", WIDTH / 2, HEIGHT / 2 + 25);
+            ctx.fillText("タップして タイトルにもどる", GAME.WIDTH / 2, GAME.HEIGHT / 2 + 25);
         }
 
         if (gameCleared) {
             ctx.fillStyle = "#E91E63";
             ctx.font = "bold 40px sans-serif";
-            ctx.fillText("🎉 GOAL !! 🎉", WIDTH / 2, HEIGHT / 2 - 30);
+            ctx.fillText("🎉 GOAL !! 🎉", GAME.WIDTH / 2, GAME.HEIGHT / 2 - 30);
             ctx.fillStyle = "#1A5276";
             ctx.font = "bold 20px sans-serif";
-            ctx.fillText("おめでとう！ゴールできたよ！", WIDTH / 2, HEIGHT / 2 + 20);
+            ctx.fillText("おめでとう！ゴールできたよ！", GAME.WIDTH / 2, GAME.HEIGHT / 2 + 20);
             ctx.fillStyle = "#2C3E50";
             ctx.font = "bold 14px sans-serif";
-            ctx.fillText("タップして タイトルにもどる", WIDTH / 2, HEIGHT / 2 + 60);
+            ctx.fillText("タップして タイトルにもどる", GAME.WIDTH / 2, GAME.HEIGHT / 2 + 60);
         }
     }
+
+function addStarEffect(x, y) {
+
+    effects.push({
+
+        x: x,
+
+        y: y,
+
+        text: "+200",
+
+        life: 40
+
+    });
+
+}
 
     // 初回読み込み時にタイトル表示
     showTitleScreen();
