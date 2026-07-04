@@ -81,7 +81,7 @@ const game = {
         this.entities = this.entities.filter(e => e.x > -100);
         this.score += (this.fever > 0 ? 0.5 : 0.1);
         // 【重要】ここでHTMLを直接書き換える
-        document.getElementById("score-label").innerText = `スコア: ${Math.floor(this.score)}`;
+        document.getElementById("score-label").innerText = `スコアー: ${Math.floor(this.score)}`;
     },
 
     loop() {
@@ -98,9 +98,9 @@ const game = {
         this.ctx.font = "20px sans-serif";
         
         this.ctx.fillText(`Score: ${Math.floor(this.score)} | Best: ${this.best}`, 20, 40);
-        this.ctx.textAlign = "center"; // 文字列を中央揃えにする
-        this.ctx.fillText(`Score: ${Math.floor(this.score)}`, 350, 40); // 画面中央(350)に表示
-        this.ctx.textAlign = "left";   // その後の描画のために戻す
+        //this.ctx.textAlign = "center"; // 文字列を中央揃えにする
+        //this.ctx.fillText(`Score: ${Math.floor(this.score)}`, 350, 40); // 画面中央(350)に表示
+        //this.ctx.textAlign = "left";   // その後の描画のために戻す
         
         // 描画メソッド内
         //this.ctx.fillStyle = "black";
