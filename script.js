@@ -48,9 +48,7 @@ class Game {
         window.addEventListener("resize", () => this.resize());
         this.resize();
         this.initInput();
-        
-        // 初回描画（タイトル画面）
-        this.draw();
+        this.draw(); // タイトル描画
     }
 
     resize() {
@@ -69,24 +67,27 @@ class Game {
             if (e.target.tagName === "BUTTON") return;
             if (!this.isTitle) this.player.jump();
         });
+
+        // ボタンイベントをここで一括設定
+        document.querySelectorAll("#menu-buttons button").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const s = parseInt(e.target.dataset.speed);
+                const mi = parseInt(e.target.dataset.min);
+                const ma = parseInt(e.target.dataset.max);
+                const t = parseInt(e.target.dataset.target);
+                this.startGame(s, mi, ma, t);
+            });
+        });
     }
 
     startGame(speed, min, max, target) {
         this.isTitle = false;
         document.getElementById("menu-buttons").style.display = "none";
-        document.getElementById("score-label").style.display = "block";
-        document.getElementById("info-label").style.display = "block";
-        
-        this.difficulty = { speed, min, max, target };
-        
-        // ループを開始
         this.loop();
     }
 
     loop() {
-        // タイトル画面ならループを抜ける
         if (this.isTitle) return;
-        
         this.update();
         this.draw();
         requestAnimationFrame(() => this.loop());
@@ -115,6 +116,4 @@ class Game {
     }
 }
 
-const game = new Game();
-// グローバル関数として公開
-window.startGame = (s, mi, ma, t) => game.startGame(s, mi, ma, t);
+new Game();

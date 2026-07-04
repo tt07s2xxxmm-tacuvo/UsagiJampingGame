@@ -16,12 +16,12 @@
     
     <div id="ui-layer">
         <div id="score-label" class="hud-text">スコア: 0</div>
-        <div id="info-label" class="hud-text">画面タップでジャンプ！ 雲にふれると5秒間スターが湧き続けるよ！☁️🌟</div>
+        <div id="info-label" class="hud-text">画面タップでジャンプ！ 雲にふれてフィーバーを目指せ！☁️🌟</div>
         
         <div id="menu-buttons" class="menu-buttons">
-            <button class="btn btn-easy" onclick="startGame(4, 60, 100, 5000)">かんたん (すぐゴール！)</button>
-            <button class="btn btn-normal" onclick="startGame(6, 45, 85, 12000)">ふつう (おすすめ)</button>
-            <button class="btn btn-hard" onclick="startGame(9, 30, 60, 25000)">むずかしい (激辛！)</button>
+            <button id="btn-easy" class="btn btn-easy" data-speed="4" data-min="60" data-max="100" data-target="5000">かんたん</button>
+            <button id="btn-normal" class="btn btn-normal" data-speed="6" data-min="45" data-max="85" data-target="12000">ふつう</button>
+            <button id="btn-hard" class="btn btn-hard" data-speed="9" data-min="30" data-max="60" data-target="25000">むずかしい</button>
         </div>
     </div>
 </div>
