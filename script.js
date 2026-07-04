@@ -94,7 +94,12 @@ const game = {
         this.entities.forEach(e => this.ctx.fillText(CFG.ICONS[e.type], e.x, e.y + 30));
         this.ctx.fillStyle = CFG.COLORS.UI;
         this.ctx.font = "20px sans-serif";
-        this.ctx.fillText(`Score: ${Math.floor(this.score)} | Best: ${this.best}`, 20, 40);
+        
+        //this.ctx.fillText(`Score: ${Math.floor(this.score)} | Best: ${this.best}`, 20, 40);
+        this.ctx.textAlign = "center"; // 文字列を中央揃えにする
+        this.ctx.fillText(`Score: ${Math.floor(this.score)}`, 350, 40); // 画面中央(350)に表示
+        this.ctx.textAlign = "left";   // その後の描画のために戻す
+        
         if (this.state === 'gameover') {
             this.ctx.textAlign = "center";
             this.ctx.fillText("ゲームオーバｧｧｧｧー　どんまい！笑", 350, 225);
