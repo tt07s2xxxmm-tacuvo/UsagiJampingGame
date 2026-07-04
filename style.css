@@ -57,6 +57,7 @@
         text-align: center;
         pointer-events: auto;
         margin-top: 15px; /* ←ここを追加（数値を大きくすればもっと下がります） */  
+        display: none;    
     }
         #info-label {
         display: block !important; /* 強制的に表示させる */  

@@ -97,7 +97,7 @@ const game = {
         this.ctx.fillText(`Score: ${Math.floor(this.score)} | Best: ${this.best}`, 20, 40);
         if (this.state === 'gameover') {
             this.ctx.textAlign = "center";
-            this.ctx.fillText("GAME OVER - TAP/SPACE TO RESTART", 350, 225);
+            this.ctx.fillText("ゲームオーバｧｧｧｧー", 350, 225);
         }
         requestAnimationFrame(() => this.loop());
     }
