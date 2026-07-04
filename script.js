@@ -5,27 +5,29 @@ const CONFIG = {
     BASE_WIDTH: 700,
     BASE_HEIGHT: 450,
     GROUND_Y: 350,
-    PHYSICS: { GRAVITY: 0.7, JUMP_SPEED: -12 }
+    PHYSICS: { GRAVITY: 0.7, JUMP_SPEED: -12 },
+    PLAYER: { W: 40, H: 40 }, // 判定サイズ
+    OBSTACLE: { W: 30, H: 35 } // 判定サイズ
 };
 
 class Obstacle {
     constructor(x) {
         this.x = x;
-        this.y = CONFIG.GROUND_Y - 35; // 地面に合わせる
-        this.width = 30;
+        this.y = CONFIG.GROUND_Y - CONFIG.OBSTACLE.H;
+        this.width = CONFIG.OBSTACLE.W;
+        this.height = CONFIG.OBSTACLE.H;
     }
-    update(speed) {
-        this.x -= speed;
-    }
+    update(speed) { this.x -= speed; }
     draw(ctx) {
         ctx.font = "32px sans-serif";
-        ctx.fillText("🌵", this.x, this.y);
+        ctx.fillText("🌵", this.x, this.y + 30);
     }
 }
 
 class Player {
     constructor() {
-        this.x = 100; this.y = 300; this.w = 45; this.h = 45;
+        this.x = 100; this.y = 300;
+        this.w = CONFIG.PLAYER.W; this.h = CONFIG.PLAYER.H;
         this.vy = 0; this.jumpCount = 0;
     }
     update() {
@@ -33,8 +35,7 @@ class Player {
         this.y += this.vy;
         if (this.y >= CONFIG.GROUND_Y - this.h) {
             this.y = CONFIG.GROUND_Y - this.h;
-            this.vy = 0;
-            this.jumpCount = 0;
+            this.vy = 0; this.jumpCount = 0;
         }
     }
     jump() {
@@ -44,8 +45,8 @@ class Player {
         }
     }
     draw(ctx) {
-        ctx.font = "42px sans-serif";
-        ctx.fillText("🐰", this.x, this.y);
+        ctx.font = "40px sans-serif";
+        ctx.fillText("🐰", this.x, this.y + 35);
     }
 }
 
@@ -56,29 +57,18 @@ class Game {
         this.player = new Player();
         this.obstacles = [];
         this.isTitle = true;
+        this.isGameOver = false;
         this.spawnTimer = 0;
         this.gameSpeed = 0;
 
-        window.addEventListener("resize", () => this.resize());
-        this.resize();
         this.initInput();
-        this.draw(); // 初期描画
-    }
-
-    resize() {
-        const aspectRatio = CONFIG.BASE_WIDTH / CONFIG.BASE_HEIGHT;
-        if (window.innerWidth / window.innerHeight > aspectRatio) {
-            this.canvas.style.height = "100vh";
-            this.canvas.style.width = (window.innerHeight * aspectRatio) + "px";
-        } else {
-            this.canvas.style.width = "100vw";
-            this.canvas.style.height = (window.innerWidth / aspectRatio) + "px";
-        }
+        this.draw();
     }
 
     initInput() {
         window.addEventListener("pointerdown", (e) => {
             if (e.target.tagName === "BUTTON") return;
+            if (this.isGameOver) location.reload(); // リセット
             if (!this.isTitle) this.player.jump();
         });
 
@@ -91,13 +81,22 @@ class Game {
 
     startGame(speed) {
         this.isTitle = false;
+        this.isGameOver = false;
         this.gameSpeed = speed;
         document.getElementById("menu-buttons").style.display = "none";
         this.loop();
     }
 
+    // 衝突判定（AABB法）
+    checkCollision(p, o) {
+        return p.x < o.x + o.width &&
+               p.x + p.w > o.x &&
+               p.y < o.y + o.height &&
+               p.y + p.h > o.y;
+    }
+
     loop() {
-        if (this.isTitle) return;
+        if (this.isTitle || this.isGameOver) return;
         this.update();
         this.draw();
         requestAnimationFrame(() => this.loop());
@@ -106,15 +105,18 @@ class Game {
     update() {
         this.player.update();
         
-        // 障害物の生成ロジックを確実に実行
         this.spawnTimer++;
         if (this.spawnTimer > 100) {
             this.obstacles.push(new Obstacle(CONFIG.BASE_WIDTH));
             this.spawnTimer = 0;
         }
 
-        // 移動と破棄
-        this.obstacles.forEach(obs => obs.update(this.gameSpeed));
+        this.obstacles.forEach(obs => {
+            obs.update(this.gameSpeed);
+            if (this.checkCollision(this.player, obs)) {
+                this.isGameOver = true;
+            }
+        });
         this.obstacles = this.obstacles.filter(obs => obs.x > -50);
     }
 
@@ -129,11 +131,11 @@ class Game {
         this.player.draw(this.ctx);
         this.obstacles.forEach(obs => obs.draw(this.ctx));
         
-        if (this.isTitle) {
-            this.ctx.fillStyle = "#1A5276";
-            this.ctx.font = "bold 30px sans-serif";
+        if (this.isGameOver) {
+            this.ctx.fillStyle = "red";
+            this.ctx.font = "bold 50px sans-serif";
             this.ctx.textAlign = "center";
-            this.ctx.fillText("ボタンを押して開始！", CONFIG.BASE_WIDTH / 2, CONFIG.BASE_HEIGHT / 2);
+            this.ctx.fillText("GAME OVER", CONFIG.BASE_WIDTH / 2, CONFIG.BASE_HEIGHT / 2);
         }
     }
 }
