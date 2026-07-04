@@ -48,6 +48,9 @@ class Game {
         window.addEventListener("resize", () => this.resize());
         this.resize();
         this.initInput();
+        
+        // 初回描画（タイトル画面）
+        this.draw();
     }
 
     resize() {
@@ -64,29 +67,26 @@ class Game {
     initInput() {
         window.addEventListener("pointerdown", (e) => {
             if (e.target.tagName === "BUTTON") return;
-            this.handleAction();
+            if (!this.isTitle) this.player.jump();
         });
     }
 
-    handleAction() {
-        if (!this.isTitle) this.player.jump();
-    }
-
-    // ★重要：HTMLから呼ばれる関数
     startGame(speed, min, max, target) {
         this.isTitle = false;
         document.getElementById("menu-buttons").style.display = "none";
         document.getElementById("score-label").style.display = "block";
         document.getElementById("info-label").style.display = "block";
         
-        // 難易度設定を保持（後ほど使う）
         this.difficulty = { speed, min, max, target };
         
+        // ループを開始
         this.loop();
     }
 
     loop() {
+        // タイトル画面ならループを抜ける
         if (this.isTitle) return;
+        
         this.update();
         this.draw();
         requestAnimationFrame(() => this.loop());
@@ -104,10 +104,17 @@ class Game {
         this.ctx.fillStyle = "#2ECC71";
         this.ctx.fillRect(0, CONFIG.GROUND_Y, CONFIG.BASE_WIDTH, CONFIG.BASE_HEIGHT - CONFIG.GROUND_Y);
         
-        this.player.draw(this.ctx);
+        if (this.isTitle) {
+            this.ctx.fillStyle = "#1A5276";
+            this.ctx.font = "bold 30px sans-serif";
+            this.ctx.textAlign = "center";
+            this.ctx.fillText("ボタンを押して開始！", CONFIG.BASE_WIDTH / 2, CONFIG.BASE_HEIGHT / 2);
+        } else {
+            this.player.draw(this.ctx);
+        }
     }
 }
 
-// グローバル関数として公開
 const game = new Game();
-function startGame(s, mi, ma, t) { game.startGame(s, mi, ma, t); }
+// グローバル関数として公開
+window.startGame = (s, mi, ma, t) => game.startGame(s, mi, ma, t);
