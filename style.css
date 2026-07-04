@@ -9,7 +9,8 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             user-select: none;
             -webkit-user-select: none;
         }
@@ -17,6 +18,7 @@
             position: relative;
             width: 100%;
             max-width: 700px;
+            width:95%;
             aspect-ratio: 700 / 450;
             background-color: #E6F4F8;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
@@ -33,10 +35,10 @@
         top: 0;
         left: 0;
         width: 100%;
-        height: 115%;
+        height: 100%;
         pointer-events: none;
         box-sizing: border-box;
-        padding: 20px;
+        padding: 10px;
         display: flex;
         flex-direction: column;
         justify-content: space-between; /* 上下両端に寄せる */
@@ -96,3 +98,26 @@
         .btn-easy { background-color: #2ECC71; }
         .btn-normal { background-color: #F1C40F; }
         .btn-hard { background-color: #E74C3C; }
+
+        @media (max-width:768px){
+
+        #score-label{
+            font-size:16px;
+            margin-top:12px;
+        }
+
+        #info-label{
+            font-size:12px;
+            padding-bottom:4px;
+        }
+
+        .btn{
+            font-size:16px;
+            padding:10px;
+        }
+
+        .menu-buttons{
+            width:90%;
+        }
+
+        }
