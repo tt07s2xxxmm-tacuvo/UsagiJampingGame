@@ -104,7 +104,7 @@ const game = {
         this.ctx.fillStyle = "black";
         this.ctx.font = "bold 30px sans-serif";
         this.ctx.textAlign = "center";
-        this.ctx.fillText(Math.floor(this.score), 350, 50); // 中央に大きくスコア
+        this.ctx.fillText("スコア：" & Math.floor(this.score), 350, 50); // 中央に大きくスコア
 
 
         if (this.state === 'gameover') {
