@@ -66,7 +66,7 @@ const game = {
         } else if (Math.random() < 0.02) {
             const r = Math.random();
             if (r < 0.15) this.entities.push({ type: 'cloud', x: 700, y: 100, vx: -6, vy: 0 });
-            else if (r < 0.4) this.entities.push({ type: 'bomb', x: 700, y: -50 + Math.random()*200, vx: -8, vy: 5 });
+            else if (r < 0.4) this.entities.push({ type: 'bomb', x: 700, y: 100 + Math.random()*200, vx: -8, vy: 0 });
             else this.entities.push({ type: 'cactus', x: 700, y: CFG.GROUND - 35, vx: -6, vy: 0 });
         }
 
@@ -80,8 +80,6 @@ const game = {
         });
         this.entities = this.entities.filter(e => e.x > -100);
         this.score += (this.fever > 0 ? 0.5 : 0.1);
-        // 【重要】ここでHTMLを直接書き換える
-        document.getElementById("score-label").innerText = `スコアー: ${Math.floor(this.score)}`;
     },
 
     loop() {
@@ -96,22 +94,10 @@ const game = {
         this.entities.forEach(e => this.ctx.fillText(CFG.ICONS[e.type], e.x, e.y + 30));
         this.ctx.fillStyle = CFG.COLORS.UI;
         this.ctx.font = "20px sans-serif";
-        
         this.ctx.fillText(`Score: ${Math.floor(this.score)} | Best: ${this.best}`, 20, 40);
-        //this.ctx.textAlign = "center"; // 文字列を中央揃えにする
-        //this.ctx.fillText(`Score: ${Math.floor(this.score)}`, 350, 40); // 画面中央(350)に表示
-        //this.ctx.textAlign = "left";   // その後の描画のために戻す
-        
-        // 描画メソッド内
-        //this.ctx.fillStyle = "black";
-        //this.ctx.font = "bold 30px sans-serif";
-        //this.ctx.textAlign = "center";
-        //this.ctx.fillText(`Score: ${Math.floor(this.score)}`, 350, 50); // 中央に大きくスコア
-
-
         if (this.state === 'gameover') {
             this.ctx.textAlign = "center";
-            this.ctx.fillText("ゲームオーバｧｧｧｧー　どんまい！笑", 350, 225);
+            this.ctx.fillText("GAME OVER - TAP/SPACE TO RESTART", 350, 225);
         }
         requestAnimationFrame(() => this.loop());
     }
