@@ -63,25 +63,25 @@ class Game {
 
     initInput() {
         window.addEventListener("pointerdown", (e) => {
-            // HTML上のボタンクリックは無視する（ボタン自体のonclickイベントに任せる）
             if (e.target.tagName === "BUTTON") return;
             this.handleAction();
         });
     }
 
     handleAction() {
-        if (this.isTitle) {
-            this.startGame();
-        } else {
-            this.player.jump();
-        }
+        if (!this.isTitle) this.player.jump();
     }
 
-    startGame() {
+    // ★重要：HTMLから呼ばれる関数
+    startGame(speed, min, max, target) {
         this.isTitle = false;
-        // HTMLのボタンを非表示にする
-        const menuButtons = document.getElementById("menu-buttons");
-        if (menuButtons) menuButtons.style.display = "none";
+        document.getElementById("menu-buttons").style.display = "none";
+        document.getElementById("score-label").style.display = "block";
+        document.getElementById("info-label").style.display = "block";
+        
+        // 難易度設定を保持（後ほど使う）
+        this.difficulty = { speed, min, max, target };
+        
         this.loop();
     }
 
@@ -104,15 +104,10 @@ class Game {
         this.ctx.fillStyle = "#2ECC71";
         this.ctx.fillRect(0, CONFIG.GROUND_Y, CONFIG.BASE_WIDTH, CONFIG.BASE_HEIGHT - CONFIG.GROUND_Y);
         
-        if (this.isTitle) {
-            this.ctx.fillStyle = "#1A5276";
-            this.ctx.font = "bold 30px sans-serif";
-            this.ctx.textAlign = "center";
-            this.ctx.fillText("タップしてゲームスタート！", CONFIG.BASE_WIDTH / 2, CONFIG.BASE_HEIGHT / 2);
-        } else {
-            this.player.draw(this.ctx);
-        }
+        this.player.draw(this.ctx);
     }
 }
 
+// グローバル関数として公開
 const game = new Game();
+function startGame(s, mi, ma, t) { game.startGame(s, mi, ma, t); }
