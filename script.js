@@ -1,5 +1,5 @@
 /**
- * Professional Jump Game - Enterprise Edition
+ * Professional 2D Jump Game - Fully Functional
  */
 
 const CFG = {
@@ -10,7 +10,6 @@ const CFG = {
 
 const game = {
     canvas: document.getElementById("gameCanvas"),
-    ctx: null,
     player: { x: 100, y: 300, vy: 0, jumps: 0 },
     entities: [], score: 0, fever: 0, best: localStorage.getItem("best") || 0,
     state: 'title', audioCtx: null,
@@ -19,13 +18,13 @@ const game = {
         this.ctx = this.canvas.getContext("2d");
         this.canvas.width = CFG.CANVAS[0]; this.canvas.height = CFG.CANVAS[1];
         
-        // ユーザーインタラクション時にAudioContextを初期化
         window.addEventListener("pointerdown", () => {
             if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            this.handleInput();
+            this.input();
         });
         
-        this.loop();
+        // メインループの開始
+        this.run();
     },
 
     playSFX(freq, type = 'sine') {
@@ -38,7 +37,7 @@ const game = {
         o.start(); o.stop(this.audioCtx.currentTime + 0.3);
     },
 
-    handleInput() {
+    input() {
         if (this.state === 'gameover') location.reload();
         if (this.state === 'playing' && this.player.jumps < 2) {
             this.player.vy = CFG.JUMP; this.player.jumps++;
@@ -49,16 +48,16 @@ const game = {
     update() {
         if (this.state !== 'playing') return;
 
-        // Physics
+        // 物理計算
         this.player.vy += CFG.GRAVITY;
         this.player.y += this.player.vy;
         if (this.player.y > CFG.GROUND - 40) { this.player.y = CFG.GROUND - 40; this.player.vy = 0; this.player.jumps = 0; }
 
-        // Spawn Logic
+        // 障害物・フィーバー生成
         if (this.fever > 0) {
             this.fever--;
             if (this.fever % 15 === 0) {
-                for(let i=0; i<3; i++) this.entities.push({ type: 'coin', x: 800 + i*50, y: 150 + Math.random()*150, vx: -12, vy: 0 });
+                for(let i=0; i<3; i++) this.entities.push({ type: 'coin', x: 750 + i*50, y: 150 + Math.random()*150, vx: -10, vy: 0 });
             }
         } else if (Math.random() < 0.02) {
             const r = Math.random();
@@ -67,6 +66,7 @@ const game = {
             else this.entities.push({ type: 'cactus', x: 700, y: CFG.GROUND - 35, vx: -6, vy: 0 });
         }
 
+        // エンティティ移動・判定
         this.entities.forEach((e, i) => {
             e.x += e.vx; e.y += e.vy;
             if (Math.abs(e.x - this.player.x) < 30 && Math.abs(e.y - this.player.y) < 30) {
@@ -76,10 +76,10 @@ const game = {
             }
         });
         this.entities = this.entities.filter(e => e.x > -100 && e.y < 500);
-        this.score += (this.fever > 0 ? 0 : 0.2);
+        this.score += (this.fever > 0 ? 0.5 : 0.1);
     },
 
-    loop() {
+    render() {
         this.ctx.fillStyle = this.fever > 0 ? CFG.COLORS.FEVER : CFG.COLORS.BG;
         this.ctx.fillRect(0, 0, 700, 450);
         this.ctx.fillStyle = CFG.COLORS.GROUND;
@@ -97,7 +97,12 @@ const game = {
             this.ctx.textAlign = "center";
             this.ctx.fillText("GAME OVER - CLICK TO RESTART", 350, 225);
         }
-        requestAnimationFrame(() => this.loop());
+    },
+
+    run() {
+        this.update();
+        this.render();
+        requestAnimationFrame(() => this.run());
     }
 };
 
