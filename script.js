@@ -61,7 +61,7 @@ const canvas = document.getElementById("gameCanvas");
         }
     });
     // スマホ・PC共通のクリック/タップ用
-    container.addEventListener("pointerdown", (e) => {
+    document.addEventListener("pointerdown", (e) => {
         // タイトル画面のボタンをタップした時はゲームのジャンプ処理を動かさない
         if (e.target.tagName === "BUTTON") return;
         
@@ -114,7 +114,7 @@ const canvas = document.getElementById("gameCanvas");
         gameOver = false;
         gameCleared = false;
         updateScoreText();
-        infoLabel.textContent = "画面タップでジャンプ！ 雲にふれると5秒間スターが湧き続けるよ！☁️🌟";
+        infoLabel.textContent = " 画面タップでジャンプ！☁️でフィーバー！☁️🌟";
         infoLabel.style.color = "#E74C3C";
         bgBackground = bgNormal;
 
@@ -321,13 +321,13 @@ const canvas = document.getElementById("gameCanvas");
 
         if (isTitle) {
             ctx.fillStyle = "#1A5276";
-            ctx.font = "bold 24px 'MS Gothic', sans-serif";
+            ctx.font = "bold 28px 'MS Gothic', sans-serif";
             ctx.textAlign = "center";
-            ctx.fillText("🐰 うさぎのジャンピングスター 🌟", WIDTH / 2, HEIGHT / 4);
+            ctx.fillText("🐰 うさぎのジャンピングスター 🌟", WIDTH / 2, HEIGHT / 5);
             
             ctx.fillStyle = "#2C3E50";
             ctx.font = "bold 16px 'MS Gothic', sans-serif";
-            ctx.fillText("むずかしさを えらんでね！", WIDTH / 2, HEIGHT / 3 + 5);
+            ctx.fillText("むずかしさを えらんでね！", WIDTH / 2, HEIGHT / 3);
             return;
         }
 
