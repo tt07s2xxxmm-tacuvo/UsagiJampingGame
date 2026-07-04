@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>うさぎのジャンピングスター</title>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="700" height="450"></canvas>
+    
+    <div id="ui-layer">
+        <div id="score-label" class="hud-text">スコア: 0</div>
+        <div id="info-label" class="hud-text">画面タップでジャンプ！ 雲にふれると5秒間スターが湧き続けるよ！☁️🌟</div>
+        
+        <div id="menu-buttons" class="menu-buttons">
+            <button class="btn btn-easy" onclick="startGame(4, 60, 100, 5000)">かんたん (すぐゴール！)</button>
+            <button class="btn btn-normal" onclick="startGame(6, 45, 85, 12000)">ふつう (おすすめ)</button>
+            <button class="btn btn-hard" onclick="startGame(9, 30, 60, 25000)">むずかしい (激辛！)</button>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>

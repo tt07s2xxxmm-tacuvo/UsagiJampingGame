@@ -1,2 +1,0 @@
-# UsagiJampingGame
-Rabbit Jump Game
