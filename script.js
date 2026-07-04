@@ -8,21 +8,17 @@ const CONFIG = {
     PHYSICS: { GRAVITY: 0.7, JUMP_SPEED: -12 }
 };
 
-// ===============================
-// 障害物専用クラス
-// ===============================
 class Obstacle {
-    constructor(x, type) {
+    constructor(x) {
         this.x = x;
-        this.y = CONFIG.GROUND_Y - 30; // 地面の上に配置
-        this.type = type; // "cactus" など
+        this.y = CONFIG.GROUND_Y - 35; // 地面に合わせる
         this.width = 30;
     }
     update(speed) {
         this.x -= speed;
     }
     draw(ctx) {
-        ctx.font = "30px sans-serif";
+        ctx.font = "32px sans-serif";
         ctx.fillText("🌵", this.x, this.y);
     }
 }
@@ -61,11 +57,12 @@ class Game {
         this.obstacles = [];
         this.isTitle = true;
         this.spawnTimer = 0;
+        this.gameSpeed = 0;
 
         window.addEventListener("resize", () => this.resize());
         this.resize();
         this.initInput();
-        this.draw();
+        this.draw(); // 初期描画
     }
 
     resize() {
@@ -109,14 +106,14 @@ class Game {
     update() {
         this.player.update();
         
-        // 障害物の生成
+        // 障害物の生成ロジックを確実に実行
         this.spawnTimer++;
         if (this.spawnTimer > 100) {
-            this.obstacles.push(new Obstacle(CONFIG.BASE_WIDTH, "cactus"));
+            this.obstacles.push(new Obstacle(CONFIG.BASE_WIDTH));
             this.spawnTimer = 0;
         }
 
-        // 障害物の移動と削除
+        // 移動と破棄
         this.obstacles.forEach(obs => obs.update(this.gameSpeed));
         this.obstacles = this.obstacles.filter(obs => obs.x > -50);
     }
@@ -131,6 +128,13 @@ class Game {
         
         this.player.draw(this.ctx);
         this.obstacles.forEach(obs => obs.draw(this.ctx));
+        
+        if (this.isTitle) {
+            this.ctx.fillStyle = "#1A5276";
+            this.ctx.font = "bold 30px sans-serif";
+            this.ctx.textAlign = "center";
+            this.ctx.fillText("ボタンを押して開始！", CONFIG.BASE_WIDTH / 2, CONFIG.BASE_HEIGHT / 2);
+        }
     }
 }
 
