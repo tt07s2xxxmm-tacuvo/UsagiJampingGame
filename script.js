@@ -1,30 +1,44 @@
 // ===============================
-// ゲーム設定 (マジックナンバーの排除)
+// ゲーム設定
 // ===============================
 const CONFIG = {
-    WIDTH: 700,
-    HEIGHT: 450,
+    BASE_WIDTH: 700,
+    BASE_HEIGHT: 450,
     GROUND_Y: 350,
     PLAYER: { X: 100, Y: 300, W: 45, H: 45 },
     PHYSICS: { GRAVITY: 0.7, JUMP_SPEED: -12 }
 };
 
-// ===============================
-// ゲーム管理クラス
-// ===============================
 class Game {
     constructor() {
         this.canvas = document.getElementById("gameCanvas");
         this.ctx = this.canvas.getContext("2d");
         this.isTitle = true;
-        this.score = 0;
 
-        // 入力処理の初期化
+        // リサイズ処理の紐付け
+        window.addEventListener("resize", () => this.resize());
+        this.resize();
+
         this.initInput();
     }
 
+    // 画面サイズに合わせてCanvasを調整する関数
+    resize() {
+        const displayWidth = window.innerWidth;
+        const displayHeight = window.innerHeight;
+        const aspectRatio = CONFIG.BASE_WIDTH / CONFIG.BASE_HEIGHT;
+
+        // 画面比率を維持して最大化
+        if (displayWidth / displayHeight > aspectRatio) {
+            this.canvas.style.height = "100vh";
+            this.canvas.style.width = (displayHeight * aspectRatio) + "px";
+        } else {
+            this.canvas.style.width = "100vw";
+            this.canvas.style.height = (displayWidth / aspectRatio) + "px";
+        }
+    }
+
     initInput() {
-        // スマホ・PC共通のクリック/タップ用
         window.addEventListener("pointerdown", (e) => {
             if (e.target.tagName === "BUTTON") return;
             this.handleAction();
@@ -41,7 +55,6 @@ class Game {
 
     start() {
         this.isTitle = false;
-        this.score = 0;
         this.loop();
     }
 
@@ -52,24 +65,20 @@ class Game {
         requestAnimationFrame(() => this.loop());
     }
 
-    update() {
-        // オブジェクトの更新処理などをここに追加予定
-    }
+    update() {}
 
     draw() {
-        // 背景クリア
+        // 現在の描画解像度をベースサイズに固定
+        this.canvas.width = CONFIG.BASE_WIDTH;
+        this.canvas.height = CONFIG.BASE_HEIGHT;
+
         this.ctx.fillStyle = "#E6F4F8";
-        this.ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
-
-        // 地面
+        this.ctx.fillRect(0, 0, CONFIG.BASE_WIDTH, CONFIG.BASE_HEIGHT);
         this.ctx.fillStyle = "#2ECC71";
-        this.ctx.fillRect(0, CONFIG.GROUND_Y, CONFIG.WIDTH, CONFIG.HEIGHT - CONFIG.GROUND_Y);
-
-        // プレイヤー描画テスト
+        this.ctx.fillRect(0, CONFIG.GROUND_Y, CONFIG.BASE_WIDTH, CONFIG.BASE_HEIGHT - CONFIG.GROUND_Y);
         this.ctx.font = "42px sans-serif";
         this.ctx.fillText("🐰", CONFIG.PLAYER.X, CONFIG.PLAYER.Y);
     }
 }
 
-// ゲーム開始
 const game = new Game();
