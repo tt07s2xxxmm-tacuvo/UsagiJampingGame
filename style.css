@@ -16,10 +16,9 @@
         }
         #game-container {
             position: relative;
-            width:95vw;
+            width:100%;
             max-width:700px;
             aspect-ratio: 700 / 450;
-            max-height:90vh;
             margin:auto;
             background-color: #E6F4F8;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
@@ -119,6 +118,24 @@
 
         .menu-buttons{
             width:90%;
+        }
+
+        }
+        
+        @media (orientation:landscape){
+
+        body{
+
+        padding:10px;
+
+        }
+
+        #game-container{
+
+        max-height:90vh;
+
+        width:auto;
+
         }
 
         }
