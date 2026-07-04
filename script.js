@@ -5,57 +5,84 @@ const CONFIG = {
     BASE_WIDTH: 700,
     BASE_HEIGHT: 450,
     GROUND_Y: 350,
-    PLAYER: { X: 100, Y: 300, W: 45, H: 45 },
     PHYSICS: { GRAVITY: 0.7, JUMP_SPEED: -12 }
 };
 
+// ===============================
+// プレイヤー専用クラス
+// ===============================
+class Player {
+    constructor() {
+        this.x = 100;
+        this.y = 300;
+        this.w = 45;
+        this.h = 45;
+        this.vy = 0;
+        this.jumpCount = 0;
+    }
+
+    update() {
+        this.vy += CONFIG.PHYSICS.GRAVITY;
+        this.y += this.vy;
+
+        // 接地判定
+        if (this.y >= CONFIG.GROUND_Y - this.h) {
+            this.y = CONFIG.GROUND_Y - this.h;
+            this.vy = 0;
+            this.jumpCount = 0;
+        }
+    }
+
+    jump() {
+        if (this.jumpCount < 2) {
+            this.vy = CONFIG.PHYSICS.JUMP_SPEED;
+            this.jumpCount++;
+        }
+    }
+
+    draw(ctx) {
+        ctx.font = "42px sans-serif";
+        ctx.fillText("🐰", this.x, this.y);
+    }
+}
+
+// ===============================
+// ゲーム管理クラス
+// ===============================
 class Game {
     constructor() {
         this.canvas = document.getElementById("gameCanvas");
         this.ctx = this.canvas.getContext("2d");
+        this.player = new Player(); // プレイヤー作成
         this.isTitle = true;
 
-        // リサイズ処理の紐付け
         window.addEventListener("resize", () => this.resize());
         this.resize();
-
         this.initInput();
     }
 
-    // 画面サイズに合わせてCanvasを調整する関数
     resize() {
-        const displayWidth = window.innerWidth;
-        const displayHeight = window.innerHeight;
         const aspectRatio = CONFIG.BASE_WIDTH / CONFIG.BASE_HEIGHT;
-
-        // 画面比率を維持して最大化
-        if (displayWidth / displayHeight > aspectRatio) {
+        if (window.innerWidth / window.innerHeight > aspectRatio) {
             this.canvas.style.height = "100vh";
-            this.canvas.style.width = (displayHeight * aspectRatio) + "px";
+            this.canvas.style.width = (window.innerHeight * aspectRatio) + "px";
         } else {
             this.canvas.style.width = "100vw";
-            this.canvas.style.height = (displayWidth / aspectRatio) + "px";
+            this.canvas.style.height = (window.innerWidth / aspectRatio) + "px";
         }
     }
 
     initInput() {
-        window.addEventListener("pointerdown", (e) => {
-            if (e.target.tagName === "BUTTON") return;
-            this.handleAction();
-        });
+        window.addEventListener("pointerdown", () => this.handleAction());
     }
 
     handleAction() {
         if (this.isTitle) {
-            this.start();
+            this.isTitle = false;
+            this.loop();
         } else {
-            console.log("ジャンプ処理を実装予定");
+            this.player.jump(); // ジャンプ実行
         }
-    }
-
-    start() {
-        this.isTitle = false;
-        this.loop();
     }
 
     loop() {
@@ -65,10 +92,11 @@ class Game {
         requestAnimationFrame(() => this.loop());
     }
 
-    update() {}
+    update() {
+        this.player.update();
+    }
 
     draw() {
-        // 現在の描画解像度をベースサイズに固定
         this.canvas.width = CONFIG.BASE_WIDTH;
         this.canvas.height = CONFIG.BASE_HEIGHT;
 
@@ -76,8 +104,8 @@ class Game {
         this.ctx.fillRect(0, 0, CONFIG.BASE_WIDTH, CONFIG.BASE_HEIGHT);
         this.ctx.fillStyle = "#2ECC71";
         this.ctx.fillRect(0, CONFIG.GROUND_Y, CONFIG.BASE_WIDTH, CONFIG.BASE_HEIGHT - CONFIG.GROUND_Y);
-        this.ctx.font = "42px sans-serif";
-        this.ctx.fillText("🐰", CONFIG.PLAYER.X, CONFIG.PLAYER.Y);
+        
+        this.player.draw(this.ctx);
     }
 }
 
